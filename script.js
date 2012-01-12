@@ -14,6 +14,7 @@ var dj = function() {
 	return {
 		init : function() {
 			var canvas = document.getElementById('field');  
+			
 			this.ul_path_display = document.getElementById("path_display");
 
 			this.width = canvas.getAttribute("width");

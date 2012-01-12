@@ -104,9 +104,11 @@ var dj = function() {
 			for(i in this.open){
 				if(this.open[i][0] == row && this.open[i][1] == col) return "open";
 			}
-			for(i in this.closed){
 
-				if(this.closed[i][0] == row && this.closed[i][1] == col) return "closed";	
+			for(i in this.closed){
+				if(this.closed[i][0] == row && this.closed[i][1] == col){
+					return "closed";
+				}
 			}
 			return false;
 		},
@@ -118,6 +120,7 @@ var dj = function() {
 				switch(map[row][col]){
 					case 0: 
 						switch(this.open_close(coord)){
+
 							case "closed":
 								return "blank-closed";
 								break;
@@ -166,7 +169,7 @@ var dj = function() {
 							break;
 					}
 
-					
+
 					//if the next block is blank then this branch is good, push this branch on the temp_paths and do this again.
 					switch(this.test_collision(test_coord)){
 						case "blank":
@@ -174,7 +177,11 @@ var dj = function() {
 							var temp_path = paths[i];
 							temp_paths.push(  temp_path.concat([test_coord])   );
 							this.removeA(this.open,test_coord) //test_coord is no longer available
-							this.closed.push([test_coord]);	//test_coord is no longer available
+							this.closed.push(test_coord);	//test_coord is no longer available
+							
+						break;
+
+						case "blank-closed":
 						break;
 
 						case "wall":
@@ -182,16 +189,11 @@ var dj = function() {
 						break;
 
 						case "finish":
-
-
 							this.completed_paths.push(paths[i]);
-
 							//complete path, push this to directions
 							// console.log("finish");
 						break;
 					}
-					
-
 				} //end for earch direction
 
 				// console.log(temp_paths);

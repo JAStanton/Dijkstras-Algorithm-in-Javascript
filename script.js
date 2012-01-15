@@ -45,9 +45,9 @@ var dj = function() {
 			this.draw_map();
 		},
 		begin : function(){
-			console.time('profile 1');
+			// console.time('profile 1');
 			dj.find_shortest_path();
-			console.timeEnd('profile 1');
+			// console.timeEnd('profile 1');
 			dj.output();
 		},
 		copy_erase_map : function(){

@@ -2,6 +2,7 @@
 
 */
 
+
 var dj = function() {
 	
 	//private functions
@@ -10,6 +11,17 @@ var dj = function() {
 		var rint = Math.round(0xffffff * Math.random());
 		return 'rgba(' + (rint >> 16) + ',' + (rint >> 8 & 255) + ',' + (rint & 255) + ',.4)';	  
 	}
+	
+	Object.prototype.clone = function() {
+	  var newObj = (this instanceof Array) ? [] : {};
+	  for (i in this) {
+	    if (i == 'clone') continue;
+	    if (this[i] && typeof this[i] == "object") {
+	      newObj[i] = this[i].clone();
+	    } else newObj[i] = this[i]
+	  } return newObj;
+	};
+
 
 	return {
 		init : function() {
@@ -20,34 +32,32 @@ var dj = function() {
 			this.width = canvas.getAttribute("width");
 			this.height = canvas.getAttribute("height");
 			this.ctx = canvas.getContext('2d');
+			
 
-			this.wall = new Array();
-			this.start = new Array();
-			this.finish = new Array();
-			this.open = new Array();
-			this.closed = new Array();
-			this.completed_paths = new Array();
+			this.available = this.copy_erase_map();
+
+
+			this.wall = [];
+			this.start = [];
+			this.finish = []; 
+			this.completed_paths = []; 
 
 			this.draw_map();
 		},
 		begin : function(){
-			var x = this.width / 2;
-		    var y = this.height / 2;
-		 
-		    this.ctx.font = "30pt Calibri";
-		    this.ctx.textAlign = "center";
-		    this.ctx.fillStyle = "blue";
-		    this.ctx.fillText("working...", x, y);	
-			
-			setTimeout(function(){
-		    	dj.find_shortest_path();
-		    	dj.output();
-			},1);			
+			console.time('profile 1');
+			dj.find_shortest_path();
+			console.timeEnd('profile 1');
+			dj.output();
 		},
-		working : function(callback){
-
-
-
+		copy_erase_map : function(){
+			var new_map = map.clone();
+			for (var col = 0; col < map.length ; col++) {
+				for (var row = 0; row < map[col].length ; row++) {
+					new_map[row][col] = 1; //1 = open; 0 = closed
+				}
+			}
+			return new_map;
 		},
 		draw_map : function(){
 			this.block_size_x = this.width / map[0].length;
@@ -59,7 +69,6 @@ var dj = function() {
 					switch(map[row][col]){
 						case 0:
 							var color = "rgb(255,255,255)";
-							this.open.push([col,row]);
 							break;
 						case 1:
 							var color = "rgb(238,238,238)";
@@ -89,26 +98,10 @@ var dj = function() {
 			this.ctx.fillRect(row * this.block_size_x,col * this.block_size_y,this.block_size_x,this.block_size_y);	
 
 		},
-		removeA : function(haystack,needle){
-			for(i in haystack){
-				if(haystack[i][0] == needle[0] && haystack[i][1] == needle[1]){
-					haystack.splice(i,1);
-					return haystack;
-				};
-			}
-		},
-		open_close : function(coord){
-			var row = coord[0],
-				col = coord[1];
-
-			for(i in this.open){
-				if(this.open[i][0] == row && this.open[i][1] == col) return "open";
-			}
-
-			for(i in this.closed){
-				if(this.closed[i][0] == row && this.closed[i][1] == col){
-					return "closed";
-				}
+		open_close : function(coord){			
+			switch(this.available[coord[1]][coord[0]]){
+				case 0: return "closed";
+				case 1: return "open";
 			}
 			return false;
 		},
@@ -120,7 +113,6 @@ var dj = function() {
 				switch(map[row][col]){
 					case 0: 
 						switch(this.open_close(coord)){
-
 							case "closed":
 								return "blank-closed";
 								break;
@@ -130,7 +122,7 @@ var dj = function() {
 						}
 					break;
 					case 1: return "wall";   break;
-					case 2: return "start";  break; //this will never happen
+					// case 2: return "start";  break; //this will never happen
 					case 3: return "finish"; break;
 				}
 			}catch(e){
@@ -138,13 +130,13 @@ var dj = function() {
 			}
 		},
 		find_shortest_path : function(){
-			var paths = new Array();
+			var paths = [];
 			var directions = Array("up","down","left","right"); //const
 			
 			//kick things off
 			paths.push([this.start]); //first path has only one branch that branch has only coord, the origin
 
-			var temp_paths = new Array();
+			var temp_paths = [];
 
 			for (var i = 0; i < paths.length; i++) {
 
@@ -152,7 +144,7 @@ var dj = function() {
 
 				for(d in directions){ //potentially up to 4 more branches
 
-					var branches = new Array(); //new branch
+					var branches = []; //new branch
 
 					switch(directions[d]){
 						case "up":
@@ -176,9 +168,7 @@ var dj = function() {
 							//direction is good, push this branch on the temp_paths
 							var temp_path = paths[i];
 							temp_paths.push(  temp_path.concat([test_coord])   );
-							this.removeA(this.open,test_coord) //test_coord is no longer available
-							this.closed.push(test_coord);	//test_coord is no longer available
-							
+							this.available[test_coord[1]][test_coord[0]] = 0; //no longer available
 						break;
 
 						case "blank-closed":

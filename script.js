@@ -1,5 +1,6 @@
-/* Author: Jonathan Stanton
-
+/* Author: Jonathan Stanton 
+   website: www.jastanton.com
+   TODO: bug: The first completed path is duplicated twice.
 */
 
 
@@ -33,14 +34,11 @@ var dj = function() {
 			this.height = canvas.getAttribute("height");
 			this.ctx = canvas.getContext('2d');
 			
+			
 
 			this.available = this.copy_erase_map();
-
-
-			this.wall = [];
-			this.start = [];
-			this.finish = []; 
-			this.completed_paths = []; 
+			this.start = [], this.finish = []; 
+			this.completed_paths = [];
 
 			this.draw_map();
 		},
@@ -52,6 +50,7 @@ var dj = function() {
 		},
 		copy_erase_map : function(){
 			var new_map = map.clone();
+			
 			for (var col = 0; col < map.length ; col++) {
 				for (var row = 0; row < map[col].length ; row++) {
 					new_map[row][col] = 1; //1 = open; 0 = closed
@@ -65,14 +64,13 @@ var dj = function() {
 			//map[row][col] aka map[y][x]
 			for (var col = 0; col < map.length ; col++) {
 				for (var row = 0; row < map[col].length ; row++) {
-				
+
 					switch(map[row][col]){
-						case 0:
+						case 0: //open
 							var color = "rgb(255,255,255)";
 							break;
-						case 1:
+						case 1: //wall
 							var color = "rgb(238,238,238)";
-							this.wall.push([col,row]);
 							break;
 						case 2:
 							var color = "rgb(0,255,0)";    
@@ -167,30 +165,25 @@ var dj = function() {
 						case "blank":
 							//direction is good, push this branch on the temp_paths
 							var temp_path = paths[i];
-							temp_paths.push(  temp_path.concat([test_coord])   );
+							temp_paths.push( temp_path.concat([test_coord]) );
 							this.available[test_coord[1]][test_coord[0]] = 0; //no longer available
 						break;
-
-						case "blank-closed":
-						break;
-
+						case "blank-closed": break;
 						case "wall":
 							//branch is dead, do nothing
 						break;
-
 						case "finish":
 							this.completed_paths.push(paths[i]);
 							//complete path, push this to directions
-							// console.log("finish");
 						break;
 					}
 				} //end for earch direction
 
-				// console.log(temp_paths);
+				//console.log(temp_paths);
 
 				paths = temp_paths
 
-			};
+			};			
 		},
 		output : function(){
 
@@ -205,11 +198,13 @@ var dj = function() {
 				var ul_path_display = document.getElementById("path_display");
 				ul_path_display.innerHTML = "";
 
-				for (var i = 0; i < this.completed_paths.length; i++) {
+				//HACK i should = 0 but completed paths
+				//is showing a duplicate of the first path
+				for (var i = 1; i < this.completed_paths.length; i++) {
 				
 					var liTag = document.createElement('li');
-					liTag.setAttribute('id', "path-" + i);
-					liTag.innerHTML = "<a href='#' onmouseout='dj.draw_map()' onmouseover='dj.draw_path("+i+");'>Path " + (i + 1) + ".</a> Distance: " + this.completed_paths[i].length + " units.";
+					liTag.setAttribute('id', "path-" + i );
+					liTag.innerHTML = "<a href='#' onmouseout='dj.draw_map()' onmouseover='dj.draw_path("+i+");'>Path " + i + ".</a> Distance: " + this.completed_paths[i].length + " units.";
 					ul_path_display.appendChild(liTag);
 					
 				};
